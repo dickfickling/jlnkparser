@@ -1,2 +1,7 @@
-nbproject/genfiles.properties
-build
+/dist/
+/build/
+/*/build/
+*/nbproject/private/*
+*/nbproject/genfiles.properties
+/nbproject/private/*
+/nbproject/genfiles.properties
