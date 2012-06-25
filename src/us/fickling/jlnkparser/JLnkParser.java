@@ -16,14 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jlnkparser;
+package us.fickling.jlnkparser;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.logging.Logger;
-import jlnkparser.LnkEnums.DriveType;
-import jlnkparser.LnkEnums.NetworkProviderType;
+import us.fickling.jlnkparser.LnkEnums.DriveType;
+import us.fickling.jlnkparser.LnkEnums.NetworkProviderType;
 
 /**
  *

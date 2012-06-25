@@ -16,16 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jlnkparser;
+package us.fickling.jlnkparser;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import jlnkparser.LnkEnums.CommonNetworkRelativeLinkFlags;
-import jlnkparser.LnkEnums.DriveType;
-import jlnkparser.LnkEnums.FileAttributesFlags;
-import jlnkparser.LnkEnums.LinkFlags;
-import jlnkparser.LnkEnums.NetworkProviderType;
+import us.fickling.jlnkparser.LnkEnums.CommonNetworkRelativeLinkFlags;
+import us.fickling.jlnkparser.LnkEnums.DriveType;
+import us.fickling.jlnkparser.LnkEnums.FileAttributesFlags;
+import us.fickling.jlnkparser.LnkEnums.LinkFlags;
+import us.fickling.jlnkparser.LnkEnums.NetworkProviderType;
 
 /**
  *
