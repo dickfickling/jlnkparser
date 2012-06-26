@@ -43,6 +43,9 @@ public class JLNK {
     private int iconIndex;
     private int showCommand;
     private short hotKey;
+    
+    private List<String> linkTargetIdList;
+    
     private boolean hasUnicodeLocalBaseAndCommonSuffixOffset;
     private String localBasePath;
     private String commonPathSuffix;
@@ -70,6 +73,7 @@ public class JLNK {
     public JLNK(int header, byte[] linkClassIdentifier, int linkFlags,
             int fileAttributesFlags, long crtime, long atime,
             long mtime, int fileSize, int iconIndex, int showCommand, short hotKey,
+            List<String> linkTargetIdList,
             boolean hasUnicodeLocalBaseAndCommonSuffixOffset,
             String localBasePath, String commonPathSuffix, String localBasePathUnicode,
             String commonPathSuffixUnicode, String name, String relativePath,
@@ -100,6 +104,7 @@ public class JLNK {
         this.iconIndex = iconIndex;
         this.showCommand = showCommand;
         this.hotKey = hotKey;
+        this.linkTargetIdList = linkTargetIdList;
         this.hasUnicodeLocalBaseAndCommonSuffixOffset = hasUnicodeLocalBaseAndCommonSuffixOffset;
         this.localBasePath = localBasePath;
         this.commonPathSuffix = commonPathSuffix;
@@ -186,6 +191,10 @@ public class JLNK {
     public short getHotKey() {
         return hotKey;
     }
+    
+    public List<String> getLinkTargetIdList() {
+        return linkTargetIdList;
+    }
 
     public int getIconIndex() {
         return iconIndex;
@@ -270,8 +279,14 @@ public class JLNK {
             } else if(commonPathSuffix != null && !commonPathSuffix.isEmpty()) {
                 return netName + "\\" + commonPathSuffix;
             }
+        } else if(linkTargetIdList != null && !linkTargetIdList.isEmpty()) {
+            String ret = "";
+            for(String s : linkTargetIdList) {
+                ret += s;
+            }
+            return ret;
         }
-        return ":-(";
+        return "No preferred path found";
     }
     
     public String getBestName() {

@@ -21,7 +21,12 @@ package us.fickling.jlnkparser;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import us.fickling.jlnkparser.LnkEnums.CommonCLSIDS;
 import us.fickling.jlnkparser.LnkEnums.DriveType;
 import us.fickling.jlnkparser.LnkEnums.NetworkProviderType;
 
@@ -58,7 +63,7 @@ public class JLnkParser {
         try {
             is.read(content);
         } catch (IOException ex) {
-            logger.warning("Failed to read input stream to byte array");
+            Logger.getLogger(JLnkParser.class.getName()).log(Level.WARNING, "Error reading input stream", ex);
         }
     }
     
@@ -77,19 +82,24 @@ public class JLnkParser {
         int showCommand = bb.getInt();
         short hotkey = bb.getShort();
         bb.get(new byte[10]); // reserved (???)
+        List<String> linkTargetIdList = new ArrayList<String>();
         if((linkFlags & LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag()) == 
                 LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag()) {
             int idListSize = bb.getShort();
             int bytesRead = 0;
+            List<byte[]> linkTargetIdListBytes = new ArrayList<byte[]>();
             while(true) {
                 short itemIdSize = bb.getShort();
                 if(itemIdSize == 0) {
                     bytesRead += 2; // two null bytes to terminate id list
                     break;
                 }
-                ByteBuffer data = bb.get(new byte[itemIdSize-2]); // an idlist data object
+                byte[] theArray = new byte[itemIdSize-2];
+                bb.get(theArray); // an idlist data object
+                linkTargetIdListBytes.add(theArray);
                 bytesRead = bytesRead + itemIdSize;
             }
+            linkTargetIdList = parseLinkTargetIdList(linkTargetIdListBytes);
         }
         boolean hasUnicodeLocalBaseAndCommonSuffixOffset = false;
         String localBasePath = null;
@@ -112,7 +122,7 @@ public class JLnkParser {
             int startOfLinkInfo = bb.position();
             int linkInfoSize = bb.getInt();
             int linkInfoHeaderSize = bb.getInt();
-            hasUnicodeLocalBaseAndCommonSuffixOffset = linkInfoHeaderSize >= 36;
+            hasUnicodeLocalBaseAndCommonSuffixOffset = linkInfoHeaderSize >= 0x24;
             int linkInfoFlags = bb.getInt();
             int volumeIdOffset = bb.getInt();
             int localBasePathOffset = bb.getInt();
@@ -130,11 +140,11 @@ public class JLnkParser {
                 driveType = DriveType.valueOf(bb.getInt());
                 driveSerialNumber = bb.getInt();
                 int volumeLabelOffset = bb.getInt();
-                if (volumeLabelOffset != 20) {
-                    volumeLabel = parseString(startOfLinkInfo + volumeIdOffset + volumeLabelOffset, false, volumeIdSize - 16);
+                if (volumeLabelOffset != 0x14) {
+                    volumeLabel = parseString(startOfLinkInfo + volumeIdOffset + volumeLabelOffset, false, volumeIdSize - 0x10);
                 } else {
                     int volumeLabelOffsetUnicode = bb.getInt();
-                    volumeLabel = parseString(startOfLinkInfo + volumeIdOffset + volumeLabelOffsetUnicode, false, volumeIdSize - 20);
+                    volumeLabel = parseString(startOfLinkInfo + volumeIdOffset + volumeLabelOffsetUnicode, false, volumeIdSize - 0x14);
                 }
                 localBasePath = parseLocalBasePath(startOfLinkInfo + localBasePathOffset, false);
             }
@@ -143,7 +153,7 @@ public class JLnkParser {
                 int commonNetworkRelativeLinkSize = bb.getInt();
                 commonNetworkRelativeLinkFlags = bb.getInt();
                 int netNameOffset = bb.getInt();
-                unicodeNetAndDeviceName = netNameOffset > 20;
+                unicodeNetAndDeviceName = netNameOffset > 0x14;
                 int deviceNameOffset = bb.getInt();
                 int netType = bb.getInt();
                 int netNameOffsetUnicode = 0;
@@ -206,6 +216,7 @@ public class JLnkParser {
         
         return new JLNK(header, linkClassIdentifier.array(), linkFlags, fileAttributes,
                 crtime, atime, mtime, fileSize, iconIndex, showCommand, hotkey,
+                linkTargetIdList,
                 hasUnicodeLocalBaseAndCommonSuffixOffset, localBasePath,
                 commonPathSuffix, localBasePathUnicode, commonPathSuffixUnicode,
                 name, relativePath, workingDir, arguments, iconLocation, driveSerialNumber,
@@ -269,5 +280,73 @@ public class JLnkParser {
     
     private String parseDeviceName(int offset, boolean unicode) {
         return parseString(offset, unicode, -1);
+    }
+    
+    private List<String> parseLinkTargetIdList(List<byte[]> idList) {
+        List<String> ret = new ArrayList<String>();
+        if(!idList.isEmpty()) {
+            CommonCLSIDS clsid = CommonCLSIDS.valueOf(Arrays.copyOfRange(idList.remove(0), 2, 18));
+            switch (clsid) {
+                case CDrivesFolder:
+                    ret.add(new String(Arrays.copyOfRange(idList.remove(0), 1, 17)).split("\0")[0]);
+                    ret.addAll(parsePathElements(idList));
+                    break;
+                case CMyDocsFolder:
+                    ret.addAll(parsePathElements(idList));
+                    break;
+                case IEFrameDLL:
+                    break;
+                case Unknown:
+                    break;
+                default:
+                    break;
+            }
+        }
+        return ret;
+    }
+    
+    private List<String> parsePathElements(List<byte[]> idList) {
+        List<String> ret = new ArrayList<String>();
+        for (byte[] pathElement : idList) {
+            ByteBuffer bb = ByteBuffer.wrap(pathElement);
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            int offset = bb.getShort(bb.limit() - 2)-2;
+            if (pathElement[offset + 0x02] < 0x03
+                    || pathElement[offset + 0x10] >= pathElement[offset]
+                    || pathElement[offset + 0x10] < 0x14) {
+                ret.add(get0xC(bb));
+                continue;
+            }
+            if (pathElement[offset + 0x10] != 0) {
+                ret.add(getStringAt(bb, offset + pathElement[offset + 0x10], true));
+                continue;
+            } else {
+                if (pathElement[offset + 0x12] >= pathElement[offset]
+                        || pathElement[offset + 0x12] < 0x14) {
+                    ret.add(get0xC(bb));
+                    continue;
+                } else {
+                    ret.add(getStringAt(bb, offset + pathElement[offset + 0x12], false));
+                    continue;
+                }
+            }
+        }
+        return ret;
+    }
+    
+    private String get0xC(ByteBuffer bb) {
+        return getStringAt(bb, 0xC, false);
+    }
+
+    private String getStringAt(ByteBuffer bb, int offset, boolean unicode) {
+        byte[] nameArr = Arrays.copyOfRange(bb.array(), offset, bb.limit());
+        if (unicode) {
+            try {
+                return new String(nameArr, "UTF-16LE").split("\0")[0];
+            } catch (UnsupportedEncodingException ex) {
+                Logger.getLogger(JLnkParser.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return new String(nameArr).split("\0")[0];
     }
 }

@@ -24,6 +24,35 @@ package us.fickling.jlnkparser;
  */
 public class LnkEnums {
     
+    private static final byte[] CDRIVES = new byte[] { (byte)0xe0, 0x4f, (byte)0xd0, 0x20,
+        (byte)0xea, 0x3a, 0x69, 0x10, (byte)0xa2, (byte)0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte)0x9d };
+    private static final byte[] CMYDOCS = new byte[] { (byte)0xba, (byte)0x8a, 0x0d,
+        0x45, 0x25, (byte)0xad, (byte)0xd0, 0x11, (byte)0x98, (byte)0xa8, 0x08, 0x00, 0x36, 0x1b, 0x11, 0x03 };
+    private static final byte[] IEFRAME = new byte[] { (byte)0x80, 0x53, 0x1c, (byte)0x87, (byte)0xa0,
+        0x42, 0x69, 0x10, (byte)0xa2, (byte)0xea, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte)0x9d };
+
+    public enum CommonCLSIDS {
+        CDrivesFolder(CDRIVES),
+        CMyDocsFolder(CMYDOCS),
+        IEFrameDLL(IEFRAME),
+        Unknown(new byte[16]);
+        
+        private byte[] flag;
+        
+        private CommonCLSIDS(byte[] flag) {
+            this.flag = flag;
+        }
+        
+        static CommonCLSIDS valueOf(byte[] type) {
+            for(CommonCLSIDS value : CommonCLSIDS.values()) {
+                if(java.util.Arrays.equals(value.flag, type)) {
+                    return value;
+                }
+            }
+            return Unknown;
+        }
+    }
+    
     public enum LinkFlags {
         HasLinkTargetIDList(0x00000001),
         HasLinkInfo(0x00000002),
@@ -89,8 +118,8 @@ public class LnkEnums {
                     return value;
                 }
             }
-            throw new IllegalArgumentException("Type not found!");
-        }   
+            return DRIVE_UNKNOWN;
+        }
     }
     
     public enum FileAttributesFlags {
@@ -193,7 +222,8 @@ public class LnkEnums {
         WNNC_NET_RSFX(0x00400000),
         WNNC_NET_MFILES(0x00410000),
         WNNC_NET_MS_NFS(0x00420000),
-        WNNC_NET_GOOGLE(0x00430000);
+        WNNC_NET_GOOGLE(0x00430000),
+        WNNC_NET_UNKNOWN(0x00000000);
         
         private int flag;
         
@@ -207,7 +237,7 @@ public class LnkEnums {
                     return value;
                 }
             }
-            throw new IllegalArgumentException("Type not found!");
+            return WNNC_NET_UNKNOWN;
         }
         
         public int getFlag() {
