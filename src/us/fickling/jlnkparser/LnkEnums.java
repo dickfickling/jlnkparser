@@ -18,34 +18,63 @@
  */
 package us.fickling.jlnkparser;
 
+import java.util.UUID;
+
 /**
  *
  * @author dick
  */
 public class LnkEnums {
     
-    private static final byte[] CDRIVES = new byte[] { (byte)0xe0, 0x4f, (byte)0xd0, 0x20,
-        (byte)0xea, 0x3a, 0x69, 0x10, (byte)0xa2, (byte)0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte)0x9d };
-    private static final byte[] CMYDOCS = new byte[] { (byte)0xba, (byte)0x8a, 0x0d,
-        0x45, 0x25, (byte)0xad, (byte)0xd0, 0x11, (byte)0x98, (byte)0xa8, 0x08, 0x00, 0x36, 0x1b, 0x11, 0x03 };
-    private static final byte[] IEFRAME = new byte[] { (byte)0x80, 0x53, 0x1c, (byte)0x87, (byte)0xa0,
-        0x42, 0x69, 0x10, (byte)0xa2, (byte)0xea, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte)0x9d };
+    private static final UUID CNETROOT = UUID.fromString("208D2C60-3AEA-1069-A2D7-08002B30309D");
+    private static final UUID CDRIVES = UUID.fromString("20D04FE0-3AEA-1069-A2D8-08002B30309D");
+    private static final UUID CMYDOCS = UUID.fromString("450D8FBA-AD25-11D0-98A8-0800361B1103");
+    private static final UUID WIN7LIBRARIES = UUID.fromString("031E4825-7B94-4DC3-B131-E946B44C8DD");
+    private static final UUID WIN7RECENT = UUID.fromString("22877A6D-37A1-461A-91B0-DBDA5AAEBC99");
+    private static final UUID WINVISTACONTROLPANEL = UUID.fromString("5399E694-6CE5-4D6C-8FCE-1D8870FDCBA0");
+    private static final UUID WIN7CONTROLPANEL = UUID.fromString("26EE0668-A00A-44D7-9371-BEB064C98683");
+    private static final UUID WINVISTAHELP = UUID.fromString("2559A1F1-21D7-11D4-BDAF-00C04F60B9F0");
+    private static final UUID WINVISTA7RUN = UUID.fromString("2559A1F3-21D7-11D4-BDAF-00C04F60B9F0");
+    private static final UUID WINVISTA7EMAIL = UUID.fromString("2559A1F5-21D7-11D4-BDAF-00C04F60B9F0");
+    private static final UUID WINVISTA7DESKTOP = UUID.fromString("3080F90D-D7AD-11D9-BD98-0000947B0257");
+    private static final UUID WINVISTASWITCHER = UUID.fromString("3080F90E-D7AD-11D9-BD98-0000947B0257");
+    private static final UUID WINVISTAPUBLIC = UUID.fromString("4336A54D-038B-4685-AB02-99BB52D3FB8B");
+    private static final UUID WINVISTA7SPECIAL = UUID.fromString("59031A47-3F72-44A7-89C5-5595FE6B30EE");
+    private static final UUID WINVISTARECYCLE = UUID.fromString("645FF040-5081-101B-9F08-00AA002F954E");
+    private static final UUID WINVISTA7GAME = UUID.fromString("ED228FDF-9EA8-4870-83B1-96B02CFE0D52");
+    private static final UUID WIN7CONTROLPANELSUBSET = UUID.fromString("ED7BA470-8E54-465E-825C-99712043E01C");
+    private static final UUID IEFRAME = UUID.fromString("871C5380-42A0-1069-A2EA-08002B30309D");
 
     public enum CommonCLSIDS {
+        CNetRoot(CNETROOT),
         CDrivesFolder(CDRIVES),
         CMyDocsFolder(CMYDOCS),
+        Win7Libraries(WIN7LIBRARIES),
+        Win7Recent(WIN7RECENT),
+        WinVistaControlPanel(WINVISTACONTROLPANEL),
+        Win7ControlPanel(WIN7CONTROLPANEL),
+        WinVistaHelp(WINVISTAHELP),
+        WinVista7Run(WINVISTA7RUN),
+        WinVista7Email(WINVISTA7EMAIL),
+        WinVista7Desktop(WINVISTA7DESKTOP),
+        WinVistaSwitcher(WINVISTASWITCHER),
+        WinVistaPublic(WINVISTAPUBLIC),
+        WinVista7Special(WINVISTA7SPECIAL),
+        WinVistaRecycle(WINVISTARECYCLE),
+        WinVista7Game(WINVISTA7GAME),
+        Win7ControlPanelSubset(WIN7CONTROLPANELSUBSET),
         IEFrameDLL(IEFRAME),
-        Unknown(new byte[16]);
+        Unknown(new UUID(0, 0));
         
-        private byte[] flag;
+        private UUID flag;
         
-        private CommonCLSIDS(byte[] flag) {
+        private CommonCLSIDS(UUID flag) {
             this.flag = flag;
         }
         
-        static CommonCLSIDS valueOf(byte[] type) {
+        static CommonCLSIDS valueOf(UUID type) {
             for(CommonCLSIDS value : CommonCLSIDS.values()) {
-                if(java.util.Arrays.equals(value.flag, type)) {
+                if(value.flag.equals(type)) {
                     return value;
                 }
             }

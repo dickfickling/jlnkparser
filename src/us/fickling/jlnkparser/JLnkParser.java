@@ -24,6 +24,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import us.fickling.jlnkparser.LnkEnums.CommonCLSIDS;
@@ -46,9 +47,9 @@ public class JLnkParser {
     public static void main(String[] args) {
         for(String arg : args) {
             File f = new File(arg);
-            if(f.exists() && f.length() < Integer.MAX_VALUE) {
+            if (f.exists() && f.length() < Integer.MAX_VALUE) {
                 try {
-                    JLnkParser parser = new JLnkParser(new FileInputStream(f), (int)f.length());
+                    JLnkParser parser = new JLnkParser(new FileInputStream(f), (int) f.length());
                     JLNK jlnk = parser.parse();
                     System.out.println(jlnk.getBestPath());
                 } catch (FileNotFoundException ex) {
@@ -249,6 +250,14 @@ public class JLnkParser {
         bb.position(offset);
         StringBuilder sb = new StringBuilder(bb.limit());
         int i = 0;
+        try {
+            if (bb.remaining() > 0) {
+                String s = new String(Arrays.copyOfRange(content, offset, offset+bb.remaining()), "Windows-1256");
+                System.out.println(s);
+            }
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(JLnkParser.class.getName()).log(Level.SEVERE, "unsupported", ex);
+        }
         while (bb.remaining() > 0 && (i < maxlen || maxlen == -1)) // safer  
         {
             char c;
@@ -287,7 +296,23 @@ public class JLnkParser {
     private List<String> parseLinkTargetIdList(List<byte[]> idList) {
         List<String> ret = new ArrayList<String>();
         if(!idList.isEmpty()) {
-            CommonCLSIDS clsid = CommonCLSIDS.valueOf(Arrays.copyOfRange(idList.remove(0), 2, 18));
+            ByteBuffer bb = ByteBuffer.wrap(idList.remove(0));
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            int size = bb.getShort();
+            String firstSection = Integer.toHexString(bb.getInt()&0xFFFFFFFF);
+            String secondSection = Integer.toHexString(bb.getShort()&0xFFFF);
+            String thirdSection = Integer.toHexString(bb.getShort()&0xFFFF);
+            bb.order(ByteOrder.BIG_ENDIAN);
+            String fourthSection = Integer.toHexString(bb.getShort()&0xFFFF);
+            String fifthSection = Integer.toHexString(bb.getShort()&0xFFFF);
+            String sixthSection = Integer.toHexString(bb.getInt()&0xFFFFFFFF);
+            UUID theUUID = UUID.fromString(firstSection + "-" +
+                    secondSection + "-" +
+                    thirdSection + "-" + 
+                    fourthSection + "-" + 
+                    fifthSection +
+                    sixthSection);
+            CommonCLSIDS clsid = CommonCLSIDS.valueOf(theUUID);
             switch (clsid) {
                 case CDrivesFolder:
                     ret.add(new String(Arrays.copyOfRange(idList.remove(0), 1, 17)).split("\0")[0]);
@@ -296,11 +321,8 @@ public class JLnkParser {
                 case CMyDocsFolder:
                     ret.addAll(parsePathElements(idList));
                     break;
-                case IEFrameDLL:
-                    break;
-                case Unknown:
-                    break;
                 default:
+                    ret.add("Unsupported LNK file");
                     break;
             }
         }
